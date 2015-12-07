@@ -1,0 +1,64 @@
+buildscript {
+    repositories { jcenter() }
+    dependencies {
+        classpath 'com.github.jengelman.gradle.plugins:shadow:1.1.1'
+        classpath 'se.transmode.gradle:gradle-docker:1.2'
+    }
+}
+
+apply plugin: 'idea'
+apply plugin: 'eclipse'
+apply plugin: 'java'
+apply plugin: 'com.github.johnrengelman.shadow'
+
+version = '3.1.0'
+
+if (!JavaVersion.current().java8Compatible) {
+    throw new IllegalStateException('''A Haiku:
+                                      |  This needs Java 8,
+                                      |  You are using something else,
+                                      |  Refresh. Try again.'''.stripMargin())
+}
+
+repositories {
+    mavenCentral()
+    maven {
+        url = 'http://oss.sonatype.org/content/repositories/snapshots/'
+    }
+}
+
+dependencies {
+    compile "io.vertx:vertx-core:$version"
+    compile "io.vertx:vertx-web:$version"
+    compile "io.vertx:vertx-hazelcast:$version"
+    compile "io.vertx:vertx-mail-client:$version"
+    compile 'com.cyngn.vertx:vertx-kafka:0.3.0'
+    compile "org.slf4j:slf4j-log4j12:1.7.12"
+	compile "org.slf4j:slf4j-api:1.7.12"
+	compile "log4j:log4j:1.2.17"
+}
+
+shadowJar {
+    classifier = 'fat'
+    manifest {
+        attributes 'Main-Class': 'io.vertx.core.Launcher'
+        attributes 'Main-Verticle': 'com.tikal.angelsense.notifications.EmailNotificationKafkaVerticle'
+    }
+    mergeServiceFiles {
+        include 'META-INF/services/io.vertx.core.spi.VerticleFactory'
+    }
+}
+
+task zipAll(type: Zip) {
+    from '.'
+	baseName = 'as-notifications'
+    include 'conf/**'
+    include '*.sh'
+    include 'build/libs/*.jar'
+}
+
+
+
+task wrapper(type: Wrapper) {
+    gradleVersion = '2.0'
+}

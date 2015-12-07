@@ -1,0 +1,17 @@
+{
+	"http-port" : 5080,
+	"management.http.server.port" : 3080,
+	"management.http.server.address" : "localhost",
+	"mail.host" : "smtp.googlemail.com",
+	"mail.port" : 465,
+	"mail.username":"angelsensedemo@gmail.com",
+	"mail.password":"angelsensedemo1234",
+	
+	"consumer" : {
+	    "zookeeper.host" : "localhost",
+	    "group.id" : "notificationsGroup",
+	    "topics" : ["as-segments"]
+	 },
+	 
+	 "blockEmailsSending" : true
+}
