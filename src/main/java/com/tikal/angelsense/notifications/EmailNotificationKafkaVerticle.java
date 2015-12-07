@@ -56,7 +56,14 @@ public class EmailNotificationKafkaVerticle extends AbstractVerticle {
 		final JsonObject segment = new JsonObject(m.body());
 		logger.debug("Got segment message {}",segment);
 		//We send mail only on closing place segment
-		if(!segment.getBoolean("isOpen") && segment.getString("segmentType").equals("place")){
+		final boolean isPlace = segment.getString("segmentType").equals("place");
+		if(!isPlace){
+			logger.debug("Not sending email for transit");
+			return;
+		}
+		
+		//We send mail if we exit a place (isOpen=false) or we enter a segment (isNew=true)
+		if(!segment.getBoolean("isOpen") || segment.getBoolean("isNew")){
 			final Integer angelId = segment.getInteger("angelId");
 			managementHttpClient.get(
 				"/api/v1/angels/"+angelId+"/guardian/email", 
@@ -81,12 +88,20 @@ public class EmailNotificationKafkaVerticle extends AbstractVerticle {
 
 	private void sendMail(final Integer angelId,final JsonObject segment,final String guardianEmail) {
 		try {
-			final String body = String.format("The angel %s exited the place at %s", angelId,df.parse(String.valueOf(segment.getLong("startTime"))));
+			String subject;
+			String body;
+			if(segment.getBoolean("isNew")){
+				subject= "Enter Segment";
+				body = String.format("The angel %s entered the place at address {} at %s", angelId,segment.getString("address"),df.parse(String.valueOf(segment.getLong("startTime"))));
+			}else{
+				subject= "Exit Segment";
+				body = String.format("The angel %s exited the place at address {} at %s", angelId,segment.getString("address"),df.parse(String.valueOf(segment.getLong("startTime"))));
+			}				
 			final MailMessage email = new MailMessage().setFrom("angelsensedemo@gmail.com").setTo(guardianEmail)
-				.setSubject("Exit segment")
+				.setSubject(subject)
 				.setHtml(body);
 			if(blockEmailsSending)
-				logger.trace("Did not send mail to {} , as we are mails are configured to be blocked",guardianEmail);
+				logger.trace("Did not send mail to {} , as we are mails are configured to be blocked. segment is {}",guardianEmail,segment);
 			else
 				mailClient.sendMail(email, result -> handleMailSent(result));
 		} catch (final Exception e) {
