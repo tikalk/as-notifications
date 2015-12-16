@@ -42,7 +42,7 @@ shadowJar {
     classifier = 'fat'
     manifest {
         attributes 'Main-Class': 'io.vertx.core.Launcher'
-        attributes 'Main-Verticle': 'com.tikal.angelsense.notifications.EmailNotificationKafkaVerticle'
+        attributes 'Main-Verticle': 'com.tikal.fleettracker.notifications.EmailNotificationKafkaVerticle'
     }
     mergeServiceFiles {
         include 'META-INF/services/io.vertx.core.spi.VerticleFactory'

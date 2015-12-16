@@ -1,4 +1,4 @@
-package com.tikal.angelsense.notifications;
+package com.tikal.fleettracker.notifications;
 
 import java.text.SimpleDateFormat;
 
@@ -64,40 +64,40 @@ public class EmailNotificationKafkaVerticle extends AbstractVerticle {
 		
 		//We send mail if we exit a place (isOpen=false) or we enter a segment (isNew=true)
 		if(!segment.getBoolean("isOpen") || segment.getBoolean("isNew")){
-			final Integer angelId = segment.getInteger("angelId");
+			final Integer vehicleId = segment.getInteger("vehicleId");
 			managementHttpClient.get(
-				"/api/v1/angels/"+angelId+"/guardian/email", 
-				response->handleResponse(response,angelId, segment)).putHeader("content-type", "text/json").end();
+				"/api/v1/vehicles/"+vehicleId+"/guardian/email", 
+				response->handleResponse(response,vehicleId, segment)).putHeader("content-type", "text/json").end();
 		}
 	}
 
-	private void handleResponse(final HttpClientResponse response, final Integer angelId,final JsonObject segment) {
+	private void handleResponse(final HttpClientResponse response, final Integer vehicleId,final JsonObject segment) {
 		if(response.statusCode() != 200){
-			logger.error("Could not find email for guardian's angel {}: {}",angelId,response.statusMessage());
+			logger.error("Could not find email for guardian's vehicle {}: {}",vehicleId,response.statusMessage());
 		}else{			
 			response.bodyHandler(body -> {			
 				if(body==null || body.toString().isEmpty()){
-					logger.error("Could not find email for guardian's angel {}",angelId);
+					logger.error("Could not find email for guardian's vehicle {}",vehicleId);
 				}
 				else{
-					sendMail(angelId, segment, body.toString());
+					sendMail(vehicleId, segment, body.toString());
 				}
 			});
 		}
 	}
 
-	private void sendMail(final Integer angelId,final JsonObject segment,final String guardianEmail) {
+	private void sendMail(final Integer vehicleId,final JsonObject segment,final String guardianEmail) {
 		try {
 			String subject;
 			String body;
 			if(segment.getBoolean("isNew")){
 				subject= "Enter Segment";
-				body = String.format("The angel %s entered the place at address {} at %s", angelId,segment.getString("address"),df.parse(String.valueOf(segment.getLong("startTime"))));
+				body = String.format("The vehicle %s entered the place at address {} at %s", vehicleId,segment.getString("address"),df.parse(String.valueOf(segment.getLong("startTime"))));
 			}else{
 				subject= "Exit Segment";
-				body = String.format("The angel %s exited the place at address {} at %s", angelId,segment.getString("address"),df.parse(String.valueOf(segment.getLong("startTime"))));
+				body = String.format("The vehicle %s exited the place at address {} at %s", vehicleId,segment.getString("address"),df.parse(String.valueOf(segment.getLong("startTime"))));
 			}				
-			final MailMessage email = new MailMessage().setFrom("angelsensedemo@gmail.com").setTo(guardianEmail)
+			final MailMessage email = new MailMessage().setFrom("fleettrackerdemo@gmail.com").setTo(guardianEmail)
 				.setSubject(subject)
 				.setHtml(body);
 			if(blockEmailsSending)

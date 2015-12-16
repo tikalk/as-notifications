@@ -4,8 +4,8 @@
 	"management.http.server.address" : "localhost",
 	"mail.host" : "smtp.googlemail.com",
 	"mail.port" : 465,
-	"mail.username":"angelsensedemo@gmail.com",
-	"mail.password":"angelsensedemo1234",
+	"mail.username":"fleettrackerdemo@gmail.com",
+	"mail.password":"fleettrackerdemo1234",
 	
 	"consumer" : {
 	    "zookeeper.host" : "localhost",
