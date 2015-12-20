@@ -1,6 +1,8 @@
 package com.tikal.fleettracker.notifications;
 
 import java.text.SimpleDateFormat;
+import java.util.HashSet;
+import java.util.Set;
 
 import com.cyngn.kafka.MessageConsumer;
 
@@ -19,18 +21,22 @@ import io.vertx.ext.mail.MailMessage;
 import io.vertx.ext.mail.MailResult;
 import io.vertx.ext.mail.StartTLSOptions;
 
-public class EmailNotificationKafkaVerticle extends AbstractVerticle {
+public class LongTransitEmailNotificationVerticle extends AbstractVerticle {
 
-	private static final org.slf4j.Logger logger = org.slf4j.LoggerFactory.getLogger(EmailNotificationKafkaVerticle.class);
+	private static final org.slf4j.Logger logger = org.slf4j.LoggerFactory.getLogger(LongTransitEmailNotificationVerticle.class);
 	private MailClient mailClient ;
 	private final SimpleDateFormat df = new SimpleDateFormat("yyMMddHHmmss");
 	private HttpClient managementHttpClient;
 	
 	private boolean blockEmailsSending;
+	
+	private int longTransitThresholdInSec;
+	
+	private final Set<String> longTransits = new HashSet<>();
 
 	@Override
 	public void start() {
-		
+		longTransitThresholdInSec = config().getInteger("longTransitThresholdInSec");
 		vertx.deployVerticle(MessageConsumer.class.getName(),new DeploymentOptions().setConfig(config()),this::handleKafkaDeploy);
 		
 		final MailConfig mailConfig = new MailConfig().setHostname(config().getString("mail.host")).setPort(config().getInteger("mail.port")).setSsl(true)
@@ -55,20 +61,16 @@ public class EmailNotificationKafkaVerticle extends AbstractVerticle {
 	private void handleEmailNotification(final Message<String> m) {	
 		final JsonObject segment = new JsonObject(m.body());
 		logger.debug("Got segment message {}",segment);
-		//We send mail only on closing place segment
-		final boolean isPlace = segment.getString("segmentType").equals("place");
-		if(!isPlace){
-			logger.debug("Not sending email for transit");
-			return;
-		}
-		
-		//We send mail if we exit a place (isOpen=false) or we enter a segment (isNew=true)
-		if(!segment.getBoolean("isOpen") || segment.getBoolean("isNew")){
+		final String segmentId = segment.getString("_id");
+		if((!longTransits.contains(segmentId)) && segment.getString("segmentType").equals("transit") && segment.getInteger("duration") > longTransitThresholdInSec){
+			longTransits.add(segmentId);
 			final Integer vehicleId = segment.getInteger("vehicleId");
 			managementHttpClient.get(
 				"/api/v1/vehicles/"+vehicleId+"/guardian/email", 
 				response->handleResponse(response,vehicleId, segment)).putHeader("content-type", "text/json").end();
 		}
+		
+		
 	}
 
 	private void handleResponse(final HttpClientResponse response, final Integer vehicleId,final JsonObject segment) {
@@ -88,15 +90,8 @@ public class EmailNotificationKafkaVerticle extends AbstractVerticle {
 
 	private void sendMail(final Integer vehicleId,final JsonObject segment,final String guardianEmail) {
 		try {
-			String subject;
-			String body;
-			if(segment.getBoolean("isNew")){
-				subject= "Enter Segment";
-				body = String.format("The vehicle %s entered the place at address {} at %s", vehicleId,segment.getString("address"),df.parse(String.valueOf(segment.getLong("startTime"))));
-			}else{
-				subject= "Exit Segment";
-				body = String.format("The vehicle %s exited the place at address {} at %s", vehicleId,segment.getString("address"),df.parse(String.valueOf(segment.getLong("startTime"))));
-			}				
+			final String subject = String.format("A long transit for vehcile %s",vehicleId);
+			final String body = String.format("The vehicle %s is in transit for more time than allowed. It is in transit since %s",vehicleId,df.parse(String.valueOf(segment.getLong("startTime"))));
 			final MailMessage email = new MailMessage().setFrom("fleettrackerdemo@gmail.com").setTo(guardianEmail)
 				.setSubject(subject)
 				.setHtml(body);
