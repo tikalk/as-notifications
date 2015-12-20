@@ -34,8 +34,8 @@ repositories {
 }
 
 docker{
-    url = "https://$dockerHost:2376"
-    certPath = new File( certUrl)
+    url = "http://$dockerHost:2376"
+   // certPath = new File( certUrl)
 }
 
 dependencies {
