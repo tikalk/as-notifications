@@ -36,7 +36,7 @@ repositories {
 docker{
     url = "$dockerHost"
     if ( "$certUrl" != "" )
-        certPath = new File("$certUrl")
+        certPath = new File($certUrl)
 }
 
 dependencies {
