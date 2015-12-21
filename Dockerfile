@@ -8,17 +8,14 @@
 
 FROM java:8
 
-ENV VERTICLE_FILE as-notifications-3.1.0-fat.jar
 
-# Set the location of the verticles
-ENV VERTICLE_HOME /usr/verticles
 
-EXPOSE 8080
+EXPOSE 5080
 
 # Copy your fat jar to the container
-COPY build/libs/$VERTICLE_FILE $VERTICLE_HOME/
+ADD build/distributions/as-notifications-3.1.0.tar.gz /as-notifications
 
 # Launch the verticle
-WORKDIR $VERTICLE_HOME
+ENV WORKDIR /as-notifications
 ENTRYPOINT ["sh", "-c"]
-CMD ["java -jar $VERTICLE_FILE"]
+CMD ["cd $WORKDIR ; ./notifications.sh"]

@@ -34,8 +34,9 @@ repositories {
 }
 
 docker{
-    url = "http://$dockerHost:2376"
-   // certPath = new File( certUrl)
+    url = "$dockerHost"
+    if ( "$certUrl" != "" )
+        certPath = new File("$certUrl")
 }
 
 dependencies {
@@ -60,7 +61,8 @@ shadowJar {
     }
 }
 
-task zipAll(type: Zip) {
+task zipAll(type: Tar) {
+    extension = 'tar.gz'
     from '.'
 	baseName = 'as-notifications'
     include 'conf/**'
@@ -69,7 +71,7 @@ task zipAll(type: Zip) {
 }
 
 task buildImage(type: DockerBuildImage) {
-    dependsOn shadowJar
+    dependsOn zipAll
     quiet = false
     inputDir = projectDir
     tag = "$registerBaseName/$dockerBranch/$project.name:$dockerTag"
