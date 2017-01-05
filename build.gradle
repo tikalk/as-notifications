@@ -35,8 +35,8 @@ repositories {
 
 docker{
     url = "$dockerHost"
-    if ( "$certUrl" != "" )
-        certPath = new File($certUrl)
+ //   if ( "$certUrl" != "" )
+  //      certPath = new File($certUrl)
 }
 
 dependencies {
@@ -44,7 +44,7 @@ dependencies {
     compile "io.vertx:vertx-web:$version"
     compile "io.vertx:vertx-hazelcast:$version"
     compile "io.vertx:vertx-mail-client:$version"
-    compile 'com.cyngn.vertx:vertx-kafka:0.3.0'
+    compile 'com.cyngn.vertx:vertx-kafka:0.4.1'
     compile "org.slf4j:slf4j-log4j12:1.7.12"
 	compile "org.slf4j:slf4j-api:1.7.12"
 	compile "log4j:log4j:1.2.17"
@@ -62,12 +62,18 @@ shadowJar {
 }
 
 task zipAll(type: Tar) {
+    dependsOn shadowJar 
     extension = 'tar.gz'
-    from '.'
 	baseName = 'as-notifications'
-    include 'conf/**'
-    include '*.sh'
-    include 'build/libs/*.jar'
+    from ('.'){
+        include 'conf/**'
+        exclude '*.sh'
+        include 'build/libs/*.jar'
+     }
+     from ('.'){
+        include '*.sh'
+        fileMode 0755
+     }
 }
 
 task buildImage(type: DockerBuildImage) {

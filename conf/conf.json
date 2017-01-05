@@ -2,17 +2,18 @@
 	"longTransitThresholdInSec":60,
 	"http-port" : 5080,
 	"management.http.server.port" : 3080,
-	"management.http.server.address" : "localhost",
+	"management.http.server.address" : "as-management",
 	"mail.host" : "smtp.googlemail.com",
 	"mail.port" : 465,
 	"mail.username":"fleettrackerdemo@gmail.com",
 	"mail.password":"fleettrackerdemo1234",
-	
-	"consumer" : {
-	    "zookeeper.host" : "localhost",
-	    "group.id" : "notificationsGroup",
-	    "topics" : ["as-segments"]
-	 },
-	 
-	 "blockEmailsSending" : true
+	"blockEmailsSending" : true ,
+	"zookeeper.host" : "zookeeper:2181",
+	"group.id" : "notificationsGroup",
+	"bootstrap.servers" : "kafka:9092",
+	"backoff.increment.ms" : "100",
+	"autooffset.reset" : "smallest",
+	"topics" : ["as-segments"],
+	"eventbus.address" : "kafka.to.vertx.bridge",
+	"consumer.poll.interval.ms" : 1000
 }

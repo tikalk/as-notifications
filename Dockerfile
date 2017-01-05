@@ -16,6 +16,6 @@ EXPOSE 5080
 ADD build/distributions/as-notifications-3.1.0.tar.gz /as-notifications
 
 # Launch the verticle
-ENV WORKDIR /as-notifications
-ENTRYPOINT ["sh", "-c"]
-CMD ["cd $WORKDIR ; ./notifications.sh"]
+WORKDIR /as-notifications
+
+CMD ./notifications.sh

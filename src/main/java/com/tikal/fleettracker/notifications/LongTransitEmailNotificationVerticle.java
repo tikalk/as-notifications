@@ -4,7 +4,7 @@ import java.text.SimpleDateFormat;
 import java.util.HashSet;
 import java.util.Set;
 
-import com.cyngn.kafka.MessageConsumer;
+import com.cyngn.kafka.consume.SimpleConsumer;
 
 import io.vertx.core.AbstractVerticle;
 import io.vertx.core.AsyncResult;
@@ -37,8 +37,8 @@ public class LongTransitEmailNotificationVerticle extends AbstractVerticle {
 	@Override
 	public void start() {
 		longTransitThresholdInSec = config().getInteger("longTransitThresholdInSec");
-		vertx.deployVerticle(MessageConsumer.class.getName(),new DeploymentOptions().setConfig(config()),this::handleKafkaDeploy);
-		
+		vertx.deployVerticle(SimpleConsumer.class.getName(),new DeploymentOptions().setConfig(config()),this::handleKafkaDeploy);
+		logger.info("Started the HTTP server...");
 		final MailConfig mailConfig = new MailConfig().setHostname(config().getString("mail.host")).setPort(config().getInteger("mail.port")).setSsl(true)
 				.setStarttls(StartTLSOptions.REQUIRED).setLogin(LoginOption.REQUIRED).setAuthMethods("PLAIN")
 				.setUsername(config().getString("mail.username")).setPassword(config().getString("mail.password"));
@@ -116,7 +116,7 @@ public class LongTransitEmailNotificationVerticle extends AbstractVerticle {
 	private void handleKafkaDeploy(final AsyncResult<String> ar) {
 		if (ar.succeeded()){
 			logger.info("Connected to succfully to Kafka");
-			vertx.eventBus().consumer(MessageConsumer.EVENTBUS_DEFAULT_ADDRESS, this::handleEmailNotification);
+			vertx.eventBus().consumer(SimpleConsumer.EVENTBUS_DEFAULT_ADDRESS, this::handleEmailNotification);
 		}
 		else
 			logger.error("Problem connect to Kafka: ",ar.cause());
